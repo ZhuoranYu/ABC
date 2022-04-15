@@ -56,6 +56,9 @@ parser.add_argument('--ema-decay', default=0.999, type=float)
 #dataset and imbalanced type
 parser.add_argument('--dataset', type=str, default='cifar10', help='Dataset')
 parser.add_argument('--imbalancetype', type=str, default='long', help='Long tailed or step imbalanced')
+
+parser.add_argument('--e_cutoff', type=float, default=-7.5, help='energy threshold')
+
 args = parser.parse_args()
 state = {k: v for k, v in args._get_kwargs()}
 if args.dataset=='cifar10':
@@ -223,6 +226,8 @@ def train(labeled_trainloader, unlabeled_trainloader, model, optimizer, ema_opti
             outputs_u= model.classify(q1)
             targets_u2 = torch.softmax(outputs_u, dim=1).detach()
 
+
+
         targets_u = torch.argmax(targets_u2, dim=1)
 
         q = model(inputs_x)
@@ -248,10 +253,12 @@ def train(labeled_trainloader, unlabeled_trainloader, model, optimizer, ema_opti
         logitu2 = model.classify2(q2)
         logitu3 = model.classify2(q3)
 
+        energy = -torch.logsumexp(logitu1, dim=1)
+
         logits = F.softmax(logit)
         logitsu1 = F.softmax(logitu1)
         max_p2, label_u = torch.max(logitsu1, dim=1)
-        select_mask2 = max_p2.ge(0.95)
+        select_mask2 = energy.le(args.e_cutoff)
         label_u = torch.zeros(batch_size, num_class).scatter_(1, label_u.cpu().view(-1, 1), 1)
         ir22 = 1 - (epoch / 500) * (1 - ir2)
         maskforbalanceu = torch.bernoulli(torch.sum(label_u.cuda(0) * torch.tensor(ir22).cuda(0), dim=1).detach())
