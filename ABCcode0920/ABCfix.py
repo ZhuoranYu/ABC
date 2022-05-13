@@ -226,7 +226,7 @@ def train(labeled_trainloader, unlabeled_trainloader, model, optimizer, ema_opti
             outputs_u= model.classify(q1)
             targets_u2 = torch.softmax(outputs_u, dim=1).detach()
 
-
+        energy_reg = -torch.logsumexp(outputs_u, dim=1)
 
         targets_u = torch.argmax(targets_u2, dim=1)
 
@@ -236,7 +236,9 @@ def train(labeled_trainloader, unlabeled_trainloader, model, optimizer, ema_opti
 
         max_p, p_hat = torch.max(targets_u2, dim=1)
         p_hat = torch.zeros(batch_size, num_class).cuda().scatter_(1, p_hat.view(-1, 1), 1)
+
         select_mask = max_p.ge(0.95)
+        #select_mask = energy_reg.le(args.e_cutoff)
         select_mask = torch.cat([select_mask, select_mask], 0).float()
 
         all_targets = torch.cat([targets_x2, p_hat, p_hat], dim=0)

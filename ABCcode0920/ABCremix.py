@@ -17,8 +17,8 @@ import torchvision.transforms as transforms
 import torch.nn.functional as F
 import wideresnetwithABC as models
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
-from tensorboardX import SummaryWriter
-from scipy import optimize
+#from tensorboardX import SummaryWriter
+#from scipy import optimize
 parser = argparse.ArgumentParser(description='PyTorch ReMixMatch Training')
 # Optimization options
 parser.add_argument('--epochs', default=500, type=int, metavar='N', help='number of total epochs to run')
@@ -50,6 +50,8 @@ parser.add_argument('--align', action='store_false', help='Distribution alignmen
 #dataset and imbalanced type
 parser.add_argument('--dataset', type=str, default='cifar10', help='Dataset')
 parser.add_argument('--imbalancetype', type=str, default='long', help='Long tailed or step imbalanced')
+
+parser.add_argument('--e_cutoff', type=float, default=-7.5, help='energy threshold')
 
 args = parser.parse_args()
 state = {k: v for k, v in args._get_kwargs()}
